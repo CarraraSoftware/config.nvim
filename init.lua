@@ -1,4 +1,16 @@
---------------------------------------- REMAPS ----------------------------------------------
+-------------------------------------------------------------------------------
+--- REQUIRED DEPENDENCIES:
+--- nvim >= 0.12.0
+--- curl                   // for nvim-treesitter, mason
+--- tar                    // for nvim-treesitter, mason
+--- fzf                    // for telescope-fzf-native.nvim 
+--- tree-sitter-cli        // for treesitter
+---
+--- OPTIONAL DEPENDENCIES:
+--- rg                     // for telescope
+--- fd                     // for telescope
+---
+--------------------------------------- REMAPS --------------------------------
 --source: https://github.com/ThePrimeagen/init.lua/blob/master/lua/theprimeagen/remap.lua
 -- THE LEADER
 vim.g.mapleader = " "
@@ -97,6 +109,7 @@ function ClearTerm(reset)
 end
 
 -------------------------------- OPTIONS ---------------------------------------------------
+require("vim._core.ui2").enable()
 
 vim.opt.guicursor = ""
 
@@ -138,7 +151,7 @@ vim.api.nvim_create_autocmd({"BufNewFile", "BufRead"}, {
   command = "set filetype=c",
 })
 
---------------------------------------- PLUGINS ---------------------------------------------
+--------------------------------------- PLUGINS -------------------------------
 local function gh(x)
     return "https://github.com/" .. x
 end
