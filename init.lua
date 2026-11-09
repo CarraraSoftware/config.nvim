@@ -492,3 +492,74 @@ dap.configurations.gdscript = {
 
 vim.pack.add({ gh("mrcjkb/rustaceanvim") })
 ---------
+
+--  ||
+-- A||ign UserCommand --
+--  ||
+--[[
+-- Usage:
+--   - Select some amount of lines with a visual selection;
+--   - Invoke UserCommand in cmdline with: ':Allign';
+--   - cmdline will prompt user for a character with message: 'Allign by character: ';
+--   - Insert character that will be used for the allignment, e.g. inserting ',' (without the quotes on the cmdline)
+--     will allign the lines in the visual selection by ',', and press enter;
+--   - Allignment complete.
+--]]
+function allign(opts)
+    -- opts.range == 0 or 1  => no visual selection
+    -- opts.range == 2       => visual selection with start and end
+    -- right now, this user_command only works with visual selections
+    if opts.range == 2 then
+        -- gets the visual selection
+        local start = opts.line1 - 1;
+        local end_  = opts.line2;
+        local lines = vim.api.nvim_buf_get_lines(0, start, end_, true)
+
+        -- prompt user for a character
+        local prompt_msg = "Allign by character: "
+        vim.ui.input({ prompt = prompt_msg } , function(input)
+            -- pipe the lines 'column' cli tool
+            local ret = vim.system(
+                { "column", "-t", "-o", input, "-s", input},
+                {
+                    stdin = lines,
+                    text  = true,
+                }
+            ):wait()
+
+            -- if error code, bail out
+            if ret.code ~= 0 then
+                vim.notify(
+                    "'column' failed with code: " .. ret.code .. ". Error = " .. ret.stderr,
+                    vim.log.levels.ERROR
+                )
+                return
+            end
+
+            -- append a line feed to the last line if there isn't one
+            local outstr = ret.stdout
+            if string.sub(outstr, -1, -1) ~= '\n' then
+                outstr = outstr .. '\n'
+            end
+
+            -- break the string output of 'column' into a table with separate lines
+            local outlines = {}
+            local start_idx = 1
+            for i = 1,#outstr do
+                if string.sub(outstr, i, i) == '\n' then
+                    local curline = string.sub(outstr, start_idx, i-1)
+                    table.insert(outlines, curline)
+                    start_idx = i + 1
+                end
+            end
+
+            -- replace the visual selection's original lines with the table of lines
+            vim.api.nvim_buf_set_lines(0, start, end_, true, outlines)
+
+        end)
+    else
+        vim.notify("Allignment only works with visual selection", vim.log.levels.ERROR)
+    end
+end
+
+vim.api.nvim_create_user_command("Allign", allign, { range = true })
